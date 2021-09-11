@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: star-wars
+
+management:
+  endpoint:
+    health:
+      show-details: "ALWAYS"
+
+server:
+  error:
+    include-message: always
+
+infrastructure:
+  apiclient:
+    starwars:
+      url: https://swapi.dev/api

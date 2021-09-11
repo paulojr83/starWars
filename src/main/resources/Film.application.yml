@@ -1,0 +1,12 @@
+infrastructure:
+  apiclient:
+    film:
+        url: https://api.intelipost.com.br
+        headers:
+          contentType: application/json
+          accept: application/json
+          apiKey: 4ae232adf78fbc6a771bb124c8b11e0105cdd8176cf1ac21689c049d0f1d5111
+          platform: intelipost-docs
+          platformVersion: v1.0.0
+          plugin: intelipost-plugin
+          pluginVersion: v2.0.0

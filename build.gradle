@@ -1,0 +1,125 @@
+
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:2.2.5.RELEASE")
+	}
+}
+
+apply plugin: "org.springframework.boot"
+apply plugin: "io.spring.dependency-management"
+apply plugin: "java"
+apply plugin: "application"
+apply plugin: "pmd"
+apply plugin: "checkstyle"
+apply plugin: "jacoco"
+
+group = 'br.com.star.wars'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+compileJava.options.encoding = "UTF-8"
+compileTestJava.options.encoding = "UTF-8"
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation "org.springframework.boot:spring-boot-starter-actuator"
+	compileOnly 'org.projectlombok:lombok:1.18.16'
+	annotationProcessor 'org.projectlombok:lombok:1.18.16'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation "io.springfox:springfox-swagger2:2.9.2"
+	implementation "io.springfox:springfox-swagger-ui:2.9.2"
+	implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'com.tngtech.archunit:archunit:0.18.0'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:Hoxton.SR8"
+	}
+}
+
+checkstyle {
+	toolVersion = "8.25"
+	configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+	configProperties = ["suppressionFile": file("config/checkstyle/suppression.xml")]
+}
+
+pmd {
+	toolVersion = "6.18.0"
+	consoleOutput = true
+	ruleSetFiles = files("config/pmd/pmd-ruleset.xml")
+	ruleSets = []
+}
+
+test {
+	useJUnitPlatform()
+	dependsOn "cleanTest"
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
+	finalizedBy jacocoTestCoverageVerification
+}
+
+jacocoTestReport {
+	afterEvaluate {
+		getClassDirectories().setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: [
+					'*/*Builder'
+			])
+			fileTree(dir: it, includes: [
+					'*/core.*',
+					'*/mapper/*'
+			])
+		}))
+	}
+	reports {
+		xml.enabled false
+		csv.enabled false
+		html.destination file("${buildDir}/jacocoHtml")
+	}
+}
+
+jacoco {
+	toolVersion = "0.8.6"
+}
+
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			element = 'CLASS'
+			includes = [
+					'*.core.*',
+					'*.mapper.*'
+			]
+
+			excludes = [
+					'*.*Builder',
+			]
+
+			limit {
+				minimum = 1.000
+			}
+		}
+	}
+}
+
+task installGitHook(type: Copy) {
+	from new File(rootProject.rootDir, "./config/git-hooks/pre-push")
+	into { new File(rootProject.rootDir, '.git/hooks') }
+	fileMode 0775
+}
+
+tasks.build.dependsOn(installGitHook)
+
